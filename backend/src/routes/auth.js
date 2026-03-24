@@ -31,8 +31,7 @@ router.post('/register', [
     }
 
     const password_hash = await bcrypt.hash(password, 12);
-    const result = await db.get('INSERT INTO users (name, email, password_hash, currency, monthly_income) VALUES (?, ?, ?, ?, ?)'
-    ).run(name, email, password_hash, currency, monthly_income);
+    const result = await db.run('INSERT INTO users (name, email, password_hash, currency, monthly_income) VALUES (?, ?, ?, ?, ?) RETURNING id', [name, email, password_hash, currency, monthly_income]);
 
     const token = jwt.sign(
       { userId: result.lastInsertRowid },
