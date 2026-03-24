@@ -41,7 +41,7 @@ router.post('/register', [
     const otp_expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     const result = await db.run(
-      'INSERT INTO users (name, email, password_hash, currency, monthly_income, bank_account_name, bank_account_number, ifsc_code, otp_code, otp_expires_at, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0) RETURNING id', 
+      'INSERT INTO users (name, email, password_hash, currency, monthly_income, bank_account_name, bank_account_number, ifsc_code, otp_code, otp_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id', 
       [name, email, password_hash, currency, monthly_income, bank_account_name, bank_account_number, ifsc_code, otp_code, otp_expires_at]
     );
 
@@ -78,7 +78,7 @@ router.post('/verify-otp', [
     }
 
     // Mark as verified
-    await db.run('UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL WHERE id = ?', [user.id]);
+    await db.run('UPDATE users SET is_verified = TRUE, otp_code = NULL, otp_expires_at = NULL WHERE id = ?', [user.id]);
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
 

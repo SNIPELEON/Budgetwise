@@ -1,0 +1,16 @@
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+🚀 BudgetWise API running on http://localhost:5000
+📊 Health check: http://localhost:5000/api/health
+🔑 Demo login: demo@budgetwise.com / Demo@1234
+
+C:\Users\yugin\.gemini\antigravity\scratch\budgetwise\backend\src\db\database.js:39
+      return sqliteDb.prepare(sql).get(...(Array.isArray(params) ? params : [params]));
+                                   ^
+
+RangeError: Too few parameter values were provided
+    at Object.get (C:\Users\yugin\.gemini\antigravity\scratch\budgetwise\backend\src\db\database.js:39:36)
+    at C:\Users\yugin\.gemini\antigravity\scratch\budgetwise\backend\src\routes\insights.js:82:33
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v24.13.1
