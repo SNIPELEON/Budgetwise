@@ -12,7 +12,7 @@ async function authenticateToken(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const db = getDb();
-    const user = await db.get('SELECT id, name, email, currency, monthly_income FROM users WHERE id = ?', [decoded.userId]);
+    const user = await db.get('SELECT id, name, email, currency, monthly_income, bank_account_name, bank_account_number, ifsc_code, is_verified FROM users WHERE id = ?', [decoded.userId]);
 
     if (!user) {
       return res.status(401).json({ error: 'User not found' });

@@ -33,6 +33,11 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (data) => {
     const res = await api.post('/auth/register', data);
+    return res.data; // returns { requires_otp, email, dev_otp }
+  }, []);
+
+  const verifyOtp = useCallback(async (email, otp_code) => {
+    const res = await api.post('/auth/verify-otp', { email, otp_code });
     const { token, user } = res.data;
     localStorage.setItem('bw_token', token);
     localStorage.setItem('bw_user', JSON.stringify(user));
@@ -52,7 +57,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser, loading }}>
+    <AuthContext.Provider value={{ user, login, register, verifyOtp, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

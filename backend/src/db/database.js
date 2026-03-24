@@ -82,6 +82,12 @@ function initSchemaSqlite() {
       password_hash TEXT NOT NULL,
       currency TEXT NOT NULL DEFAULT 'USD',
       monthly_income REAL DEFAULT 0,
+      bank_account_name TEXT,
+      bank_account_number TEXT,
+      ifsc_code TEXT,
+      otp_code TEXT,
+      otp_expires_at DATETIME,
+      is_verified INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -138,6 +144,13 @@ function initSchemaSqlite() {
     );
   `);
 
+  try { sqliteDb.exec('ALTER TABLE users ADD COLUMN bank_account_name TEXT'); } catch(e){}
+  try { sqliteDb.exec('ALTER TABLE users ADD COLUMN bank_account_number TEXT'); } catch(e){}
+  try { sqliteDb.exec('ALTER TABLE users ADD COLUMN ifsc_code TEXT'); } catch(e){}
+  try { sqliteDb.exec('ALTER TABLE users ADD COLUMN otp_code TEXT'); } catch(e){}
+  try { sqliteDb.exec('ALTER TABLE users ADD COLUMN otp_expires_at DATETIME'); } catch(e){}
+  try { sqliteDb.exec('ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0'); } catch(e){}
+
   const row = sqliteDb.prepare('SELECT seeded FROM system_categories_seeded WHERE id = 1').get();
   if (!row || !row.seeded) {
     seedCategoriesSync();
@@ -154,6 +167,12 @@ async function initSchemaPg() {
       password_hash VARCHAR(255) NOT NULL,
       currency VARCHAR(10) NOT NULL DEFAULT 'USD',
       monthly_income DECIMAL DEFAULT 0,
+      bank_account_name VARCHAR(255),
+      bank_account_number VARCHAR(255),
+      ifsc_code VARCHAR(50),
+      otp_code VARCHAR(10),
+      otp_expires_at TIMESTAMP,
+      is_verified BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -200,10 +219,17 @@ async function initSchemaPg() {
     );
 
     CREATE TABLE IF NOT EXISTS system_categories_seeded (
-      id INTEGER PRIMARY KEY CHECK(id = 1),
+      id SERIAL PRIMARY KEY CHECK(id = 1),
       seeded INTEGER DEFAULT 0
     );
   `);
+
+  try { await pgPool.query('ALTER TABLE users ADD COLUMN bank_account_name VARCHAR(255)'); } catch(e){}
+  try { await pgPool.query('ALTER TABLE users ADD COLUMN bank_account_number VARCHAR(255)'); } catch(e){}
+  try { await pgPool.query('ALTER TABLE users ADD COLUMN ifsc_code VARCHAR(50)'); } catch(e){}
+  try { await pgPool.query('ALTER TABLE users ADD COLUMN otp_code VARCHAR(10)'); } catch(e){}
+  try { await pgPool.query('ALTER TABLE users ADD COLUMN otp_expires_at TIMESTAMP'); } catch(e){}
+  try { await pgPool.query('ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT false'); } catch(e){}
 
   const res = await pgPool.query('SELECT seeded FROM system_categories_seeded WHERE id = 1');
   if (res.rowCount === 0 || !res.rows[0].seeded) {

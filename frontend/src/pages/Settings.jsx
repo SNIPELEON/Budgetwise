@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, DollarSign, Lock, Trash2, Save } from 'lucide-react';
+import { User, DollarSign, Lock, Trash2, Save, Building, ShieldCheck } from 'lucide-react';
 
 export default function Settings() {
   const { user, updateUser, logout } = useAuth();
@@ -144,6 +144,40 @@ export default function Settings() {
                 {savingPw ? 'Updating...' : <><Lock size={16} /> Update Password</>}
               </button>
             </form>
+          </div>
+
+          {/* Connected Bank Account */}
+          <div className="card">
+            <div className="card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+                <Building size={18} color="#10B981" />
+                <span className="card-title">Connected Bank Account</span>
+                {user?.is_verified === 1 && (
+                  <span style={{ marginLeft: 'auto', fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', padding: '4px 8px', borderRadius: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <ShieldCheck size={14} /> Verified
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <div style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', marginTop: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Account Name</span>
+                  <span style={{ fontWeight: 500 }}>{user?.bank_account_name || 'Not provided'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Account Number</span>
+                  <span style={{ fontWeight: 500, fontFamily: 'monospace', letterSpacing: 1 }}>
+                    {user?.bank_account_number ? `•••• •••• ${user.bank_account_number.slice(-4)}` : 'N/A'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>IFSC Code</span>
+                  <span style={{ fontWeight: 500, fontFamily: 'monospace', letterSpacing: 1 }}>{user?.ifsc_code || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Account Info */}
