@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { User, DollarSign, Lock, Trash2, Save, Building, ShieldCheck } from 'lucide-react';
 
 export default function Settings() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
   const [profile, setProfile] = useState({ name: user?.name || '', currency: user?.currency || 'USD', monthly_income: user?.monthly_income || '' });
   const [password, setPassword] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [saving, setSaving] = useState(false);
@@ -20,7 +20,7 @@ export default function Settings() {
         currency: profile.currency,
         monthly_income: parseFloat(profile.monthly_income) || 0,
       });
-      updateUser(res.data.user);
+      updateProfile(res.data.user);
       toast.success('Profile updated!');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to update profile');

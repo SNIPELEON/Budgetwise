@@ -36,8 +36,8 @@ export function AuthProvider({ children }) {
     return res.data; // returns { requires_otp, email, dev_otp }
   }, []);
 
-  const verifyOtp = useCallback(async (email, otp_code) => {
-    const res = await api.post('/auth/verify-otp', { email, otp_code });
+  const verifyPennyDrop = useCallback(async (email) => {
+    const res = await api.post('/auth/verify-penny-drop', { email });
     const { token, user } = res.data;
     localStorage.setItem('bw_token', token);
     localStorage.setItem('bw_user', JSON.stringify(user));
@@ -51,13 +51,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  const updateUser = useCallback((updatedUser) => {
+  const updateProfile = useCallback((updatedUser) => { // Renamed updateUser to updateProfile
     setUser(updatedUser);
     localStorage.setItem('bw_user', JSON.stringify(updatedUser));
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, verifyOtp, logout, updateUser, loading }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateProfile, verifyPennyDrop }}>
       {children}
     </AuthContext.Provider>
   );

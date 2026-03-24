@@ -57,40 +57,76 @@ router.post('/register', [
   }
 });
 
-// POST /api/auth/verify-otp
-router.post('/verify-otp', [
-  body('email').isEmail().normalizeEmail(),
-  body('otp_code').isString().isLength({ min: 6, max: 6 })
+// POST /api/auth/verify-penny-drop
+router.post('/verify-penny-drop', [
+  body('email').isEmail().normalizeEmail()
 ], async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: 'Validation failed', details: errors.array() });
 
-    const { email, otp_code } = req.body;
+    const { email } = req.body;
     const db = getDb();
 
     const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.is_verified) return res.status(400).json({ error: 'User is already verified' });
 
-    if (user.otp_code !== otp_code || new Date() > new Date(user.otp_expires_at)) {
-      return res.status(401).json({ error: 'Invalid or expired OTP' });
+    // Pre-flight Validation: Use regex to validate IFSC code format before hitting external API
+    if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(user.ifsc_code)) {
+      return res.status(400).json({ error: 'Invalid IFSC format detected. Transaction aborted to save API costs.' });
     }
 
-    // Mark as verified
-    await db.run('UPDATE users SET is_verified = TRUE, otp_code = NULL, otp_expires_at = NULL WHERE id = ?', [user.id]);
+    try {
+      const axios = require('axios');
+      const stringSimilarity = require('string-similarity');
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+      const response = await axios.post('https://api.cashfree.com/verification/bank-account/sync', {
+        name: user.bank_account_name,
+        phone: "9999999999", // Required generic by test envs
+        bank_account: user.bank_account_number,
+        ifsc: user.ifsc_code
+      }, {
+        headers: {
+          'x-client-id': process.env.CASHFREE_APP_ID || process.env.CASHFREE_CLIENT_ID || '',
+          'x-client-secret': process.env.CASHFREE_SECRET_KEY || process.env.CASHFREE_CLIENT_SECRET || '',
+          'x-api-version': '2022-10-26',
+          'Content-Type': 'application/json'
+        }
+      });
 
-    res.json({
-      message: 'Bank account verified successfully',
-      token,
-      user: {
-        id: user.id, name: user.name, email: user.email, currency: user.currency, 
-        monthly_income: user.monthly_income, bank_account_name: user.bank_account_name,
-        bank_account_number: user.bank_account_number, ifsc_code: user.ifsc_code, is_verified: 1
+      const { account_status, name_at_bank } = response.data;
+      
+      if (account_status !== 'VALID') {
+         return res.status(400).json({ error: 'Penny Drop failed: Bank rejected the account details as invalid or inactive.' });
       }
-    });
+
+      // Fuzzy match the Beneficiary Name against user input (requires 60% confidence)
+      const matchScore = stringSimilarity.compareTwoStrings(user.bank_account_name.toLowerCase(), (name_at_bank || '').toLowerCase());
+      if (matchScore < 0.6) {
+         return res.status(400).json({ error: `Penny Drop failed: Name mismatch. Bank reports beneficiary as: ${name_at_bank}` });
+      }
+
+      // Mark as verified
+      await db.run('UPDATE users SET is_verified = TRUE, otp_code = NULL, otp_expires_at = NULL WHERE id = ?', [user.id]);
+
+      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+
+      return res.json({
+        message: 'Official Penny Drop successful! Beneficiary Name matched and ₹1.00 deposited.',
+        token,
+        user: {
+          id: user.id, name: user.name, email: user.email, currency: user.currency, 
+          monthly_income: user.monthly_income, bank_account_name: user.bank_account_name,
+          bank_account_number: user.bank_account_number, ifsc_code: user.ifsc_code, is_verified: 1
+        }
+      });
+    } catch (apiError) {
+      if (apiError.response && apiError.response.status === 401) {
+         return res.status(500).json({ error: 'SYSTEM ALERT: Real-time architecture built, but Missing or Invalid API Keys! Please sign up for Cashfree Sandbox and add CASHFREE_APP_ID to your Environment Variables to execute the transaction.' });
+      }
+      return res.status(500).json({ error: 'Bank Verification Provider failed to respond.' });
+    }
   } catch (err) {
     next(err);
   }

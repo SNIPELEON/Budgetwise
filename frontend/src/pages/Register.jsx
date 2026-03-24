@@ -14,7 +14,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [devOtp, setDevOtp] = useState('');
   
-  const { register, verifyOtp } = useAuth();
+  const { register, verifyPennyDrop } = useAuth();
   const navigate = useNavigate();
 
   const handleNext = (e) => {
@@ -44,7 +44,6 @@ export default function Register() {
       });
       
       if (res.requires_otp) {
-        setDevOtp(res.dev_otp);
         toast.success(res.message);
         setStep(3);
       }
@@ -59,11 +58,14 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     try {
-      await verifyOtp(form.email, form.otp_code);
-      toast.success('Bank verified! Welcome to BudgetWise 🎉');
+      await verifyPennyDrop(form.email);
+      toast.success('Official Penny Drop Verification Successful 🎉');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Invalid or expired OTP');
+      toast.error(err.response?.data?.error || 'Bank Verification Failed');
+      if (err.response?.status === 500 && err.response?.data?.error?.includes('SYSTEM ALERT')) {
+         alert(err.response.data.error); // Fallback alert so developer sees missing keys immediately
+      }
     } finally {
       setLoading(false);
     }
@@ -208,29 +210,18 @@ export default function Register() {
               <div style={{ width: 64, height: 64, background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#10B981' }}>
                 <ShieldCheck size={32} />
               </div>
-              <h1 className="auth-title">Verify Bank OTP</h1>
-              <p className="auth-subtitle">We sent a 6-digit secure code to your registered bank mobile number.</p>
+              <h1 className="auth-title">Verify Bank Account</h1>
+              <p className="auth-subtitle">We will now perform a secure ₹1.00 Penny Drop to authenticate your identity.</p>
               
-              {/* DEV ONLY SIMULATOR */}
               <div style={{ marginTop: 16, padding: '12px', background: 'rgba(255, 255, 255, 0.05)', border: '1px dashed rgba(255, 255, 255, 0.2)', borderRadius: 8, fontSize: '0.85rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>[Simulated SMS Message]</span><br/>
-                Your BudgetWise bank verification code is: <strong style={{ color: 'var(--accent)', letterSpacing: '2px' }}>{devOtp}</strong><br/>
-                Do not share this code with anyone.
+                <span style={{ color: 'var(--text-muted)' }}>[IMPS Validation Protocol]</span><br/>
+                Initiating connection to the banking network via Cashfree BAV API...<br/>
               </div>
             </div>
 
             <form onSubmit={handleVerify}>
-              <div className="form-group">
-                <label className="form-label" style={{ textAlign: 'center', display: 'block' }}>Enter 6-Digit Code</label>
-                <div className="input-group" style={{ maxWidth: 200, margin: '0 auto' }}>
-                  <KeyRound size={16} className="input-icon" />
-                  <input type="text" className="form-input" placeholder="000000"
-                    value={form.otp_code} onChange={set('otp_code')} required maxLength={6} style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '1.2rem', fontWeight: 'bold' }} />
-                </div>
-              </div>
-
               <button className="btn btn-primary btn-full btn-lg" type="submit" disabled={loading} style={{ marginTop: 24 }}>
-                {loading ? <span className="animate-spin" style={{ width: 18, height: 18, border: '2px solid #000', borderTop: '2px solid transparent', borderRadius: '50%' }} /> : 'Confirm & Access Dashboard'}
+                {loading ? <span className="animate-spin" style={{ width: 18, height: 18, border: '2px solid #000', borderTop: '2px solid transparent', borderRadius: '50%' }} /> : 'Initialize ₹1.00 Penny Drop'}
               </button>
             </form>
           </>
