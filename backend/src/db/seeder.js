@@ -10,7 +10,7 @@ async function seedDemoData() {
 
   const password_hash = bcrypt.hashSync('Demo@1234', 12);
   const userResult = await db.run(
-    "INSERT INTO users (name, email, password_hash, currency, monthly_income, bank_account_name, bank_account_number, ifsc_code, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1) RETURNING id",
+    "INSERT INTO users (name, email, password_hash, currency, monthly_income, bank_account_name, bank_account_number, ifsc_code, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE) RETURNING id",
     ['Alex Johnson', 'demo@budgetwise.com', password_hash, 'USD', 5500, 'Alex Johnson', '000123456789', 'HDFC0001234']
   );
   const userId = userResult.lastInsertRowid;
